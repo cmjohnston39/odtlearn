@@ -49,10 +49,11 @@ class RobustTreeClassifier(ClassifierMixin, BaseEstimator):
         `w` for assignment variables)
     """
 
-    def __init__(self, depth=1, time_limit=1800, num_threads=None):
+    def __init__(self, depth=1, time_limit=1800, num_threads=None, warm_start=None):
         self.depth = depth
         self.time_limit = time_limit
         self.num_threads = num_threads
+        self.warm_start = warm_start
 
     def extract_metadata(self, X, y):
         """A function for extracting metadata from the inputs before converting
@@ -73,7 +74,7 @@ class RobustTreeClassifier(ClassifierMixin, BaseEstimator):
         # Strip indices in training data into integers
         self.X.set_index(pd.Index(range(X.shape[0])), inplace=True)
 
-    def fit(self, X, y, costs=None, budget=-1, verbose=True):
+    def fit(self, X, y, costs=None, budget=-1, verbose=True, warm_start=None):
         """Fit an optimal robust classification tree given data, labels,
         costs of uncertainty, and budget of uncertainty
 
@@ -147,6 +148,11 @@ class RobustTreeClassifier(ClassifierMixin, BaseEstimator):
         )
         master.create_master_problem()
         master.model.update()
+
+        if warm_start is not None:
+            master.model.read(warm_start)
+            master.model.update()
+
         master.model.optimize(mycallback)
         self.end_time = time.time()
         self.solving_time = self.end_time - self.start_time

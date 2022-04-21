@@ -68,6 +68,7 @@ class StrongTreeClassifier(ClassifierMixin, BaseEstimator):
         benders_oct=False,
         obj_mode="acc",
         num_threads=None,
+        warm_start=None
     ):
         # this is where we will initialize the values we want users to provide
         self.depth = depth
@@ -76,6 +77,7 @@ class StrongTreeClassifier(ClassifierMixin, BaseEstimator):
         self.num_threads = num_threads
         self.benders_oct = benders_oct
         self.obj_mode = obj_mode
+        self.warm_start=warm_start
 
         self.X_col_labels = None
         self.X_col_dtypes = None
@@ -94,7 +96,7 @@ class StrongTreeClassifier(ClassifierMixin, BaseEstimator):
 
         self.labels = np.unique(y)
 
-    def fit(self, X, y, verbose=False):
+    def fit(self, X, y, verbose=False, warm_start=None):
         """Fit a StrongTree using the supplied data.
 
         Parameters
@@ -144,10 +146,14 @@ class StrongTreeClassifier(ClassifierMixin, BaseEstimator):
                 self.time_limit,
                 self.num_threads,
                 self.obj_mode,
+                self.warm_start,
                 verbose,
             )
             self.grb_model.create_main_problem()
             self.grb_model.model.update()
+            if warm_start is not None:
+                self.grb_model.model.read(warm_start)
+                self.grb_model.model.update()
             self.grb_model.model.optimize(benders_callback)
         else:
             self.grb_model = FlowOCT(
@@ -164,6 +170,9 @@ class StrongTreeClassifier(ClassifierMixin, BaseEstimator):
             )
             self.grb_model.create_primal_problem()
             self.grb_model.model.update()
+            if warm_start is not None:
+                self.grb_model.model.read(warm_start)
+                self.grb_model.model.update()
             self.grb_model.model.optimize()
 
         # solving_time or other potential parameters of interest can be stored
@@ -175,6 +184,7 @@ class StrongTreeClassifier(ClassifierMixin, BaseEstimator):
         self.b_value = self.grb_model.model.getAttr("X", self.grb_model.b)
         self.w_value = self.grb_model.model.getAttr("X", self.grb_model.w)
         self.p_value = self.grb_model.model.getAttr("X", self.grb_model.p)
+
         # Return the classifier
         return self
 

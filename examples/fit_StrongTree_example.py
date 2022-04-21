@@ -10,7 +10,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from odtlearn.StrongTree import StrongTreeClassifier
 
-data = pd.read_csv("./data/balance-scale_enc.csv")
+data = pd.read_csv("../data/balance-scale_enc.csv")
 y = data.pop("target")
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -26,9 +26,11 @@ stcl = StrongTreeClassifier(
     obj_mode="acc",
 )
 
-stcl.fit(X_train, y_train, verbose=True)
+stcl.fit(X_train, y_train, verbose=True, warm_start="out.sol")
 stcl.print_tree()
 test_pred = stcl.predict(X_test)
 print(
     "The out-of-sample acc is {}".format(np.sum(test_pred == y_test) / y_test.shape[0])
 )
+
+print(stcl.grb_model.model.write("out.sol"))

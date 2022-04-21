@@ -79,6 +79,7 @@ class FairTreeClassifier(ClassifierMixin, BaseEstimator):
         fairness_bound=1,
         num_threads=None,
         obj_mode="acc",
+        warm_start=None
     ):
         # this is where we will initialize the values we want users to provide
         self.depth = depth
@@ -90,6 +91,8 @@ class FairTreeClassifier(ClassifierMixin, BaseEstimator):
         self.fairness_type = fairness_type
         self.fairness_bound = fairness_bound
         self.positive_class = positive_class
+
+        self.warm_start = warm_start
 
         self.X_col_labels = None
         self.X_col_dtypes = None
@@ -118,7 +121,7 @@ class FairTreeClassifier(ClassifierMixin, BaseEstimator):
 
         self.labels = np.unique(y)
 
-    def fit(self, X, y, P, l, verbose=True):
+    def fit(self, X, y, P, l, verbose=True, warm_start=None):
         """A reference implementation of a fitting function.
 
         Parameters
@@ -178,6 +181,9 @@ class FairTreeClassifier(ClassifierMixin, BaseEstimator):
         )
         self.grb_model.create_primal_problem()
         self.grb_model.model.update()
+        if warm_start is not None:
+            self.grb_model.model.read(warm_start)
+            self.grb_model.model.update()
         self.grb_model.model.optimize()
 
         # solving_time or other potential parameters of interest can be stored

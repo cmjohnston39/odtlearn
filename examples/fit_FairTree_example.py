@@ -10,11 +10,11 @@ import numpy as np
 from odtlearn.FairTree import FairTreeClassifier
 
 
-data_train = pd.read_csv("./data/compas/compas_train_1.csv")
-dat_train_enc = pd.read_csv("./data/compas/compas_train_enc_1.csv") #This is one-hot encoded version of data_train where every column is binary
+data_train = pd.read_csv("../data/compas/compas_train_1.csv")
+dat_train_enc = pd.read_csv("../data/compas/compas_train_enc_1.csv") #This is one-hot encoded version of data_train where every column is binary
 
-data_test = pd.read_csv("./data/compas/compas_test_1.csv")
-dat_test_enc = pd.read_csv("./data/compas/compas_test_enc_1.csv")
+data_test = pd.read_csv("../data/compas/compas_test_1.csv")
+dat_test_enc = pd.read_csv("../data/compas/compas_test_enc_1.csv")
 
 branching_features = [
         "race.1",
@@ -52,14 +52,14 @@ fcl = FairTreeClassifier(
     positive_class=1,
     depth=1,
     _lambda=0,
-    time_limit=60,
+    time_limit=1,
     fairness_type="CSP",
     fairness_bound=1,
     num_threads=None,
     obj_mode = 'balance'
 )
 
-fcl.fit(X_train, y_train, P_train, l_train,  verbose = False)
+fcl.fit(X_train, y_train, P_train, l_train,  verbose =True, warm_start="fair.sol")
 fcl.print_tree()
 pred_test = fcl.predict(X_test)
 sp_val = fcl.get_SP(P_test, y_test)
@@ -67,3 +67,5 @@ csp_val = fcl.get_CSP(P_test, l_test, y_test)
 eq_val = fcl.get_EqOdds(P_test, y_test, pred_test)
 ceq_val = fcl.get_CondEqOdds(P_test, l_test, y_test, pred_test)
 
+#this will write out the sol file
+print(fcl.grb_model.model.write("fair.sol"))

@@ -55,12 +55,14 @@ class PrescriptiveTreeClassifier(ClassifierMixin, BaseEstimator):
         The values of decision variable p -- whether or not a tree's nodes branch or assign treatment
     """
 
-    def __init__(self, depth, time_limit, method="IPW", num_threads=None):
+    def __init__(self, depth, time_limit, method="IPW", num_threads=None, warm_start=None):
         # this is where we will initialize the values we want users to provide
         self.depth = depth
         self.time_limit = time_limit
         self.num_threads = num_threads
         self.method = method
+
+        self.warm_start = warm_start
 
         self.X_col_labels = None
         self.X_col_dtypes = None
@@ -148,7 +150,7 @@ class PrescriptiveTreeClassifier(ClassifierMixin, BaseEstimator):
         check_consistent_length(X, y)
         return y
 
-    def fit(self, X, t, y, ipw=None, y_hat=None):
+    def fit(self, X, t, y, ipw=None, y_hat=None, warm_start=None):
         """Method to fit the PrescriptiveTree class on the data
 
         Parameters
@@ -254,6 +256,9 @@ class PrescriptiveTreeClassifier(ClassifierMixin, BaseEstimator):
 
         self.grb_model.create_main_problem()
         self.grb_model.model.update()
+        if warm_start is not None:
+            self.grb_model.model.read(warm_start)
+            self.grb_model.model.update()
         self.grb_model.model.optimize()
 
         self.end_time = time.time()
