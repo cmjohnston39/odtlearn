@@ -3,5 +3,8 @@ scipy
 scikit-learn
 matplotlib
 pytest
+pytest-cov
 pandas
 gurobipy
+seaborn
+mip
